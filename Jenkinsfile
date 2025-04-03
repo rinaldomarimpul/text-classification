@@ -79,9 +79,7 @@ pipeline {
     post {
         always {
             // Bersihkan workspace
-            node {
-                cleanWs()
-            }
+            cleanWs()
         }
         success {
             echo 'Pipeline berhasil! API siap digunakan.'
