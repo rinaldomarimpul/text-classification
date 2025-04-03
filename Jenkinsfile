@@ -1,21 +1,14 @@
 pipeline {
     agent any
     
-    // environment {
-    //     // Definisikan variabel lingkungan
-    //     APP_NAME = 'text-classification'
-    //     DOCKER_HUB_USERNAME = credentials('docker-hub-username')
-    //     DOCKER_IMAGE_NAME = "${DOCKER_HUB_USERNAME}/${APP_NAME}"
-    //     DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-    // }
-
     environment {
         // Definisikan variabel lingkungan
         APP_NAME = 'text-classification'
-        DOCKER_HUB_USERNAME = credentials('dockerhub-credentials').username
-        DOCKER_HUB_PASSWORD = credentials('dockerhub-credentials').password
+        DOCKER_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE_NAME = "${DOCKER_CREDENTIALS_USR}/${APP_NAME}"
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
- 
+    
     stages {
         stage('Checkout') {
             steps {
@@ -56,16 +49,13 @@ pipeline {
         
         stage('Push Docker Image') {
             steps {
-                // Login ke Docker Hub dan push image (dalam produksi gunakan credentials)
-                // Untuk local, komentar bagian ini jika tidak ingin push ke Docker Hub
-                /* 
-                withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_HUB_PASSWORD')]) {
-                    sh "echo ${DOCKER_HUB_PASSWORD} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin"
-                    sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-                    sh "docker push ${DOCKER_IMAGE_NAME}:latest"
-                }
-                */
-                echo "Skip pushing to Docker Hub for local development"
+                // Login ke Docker Hub dan push image
+                sh "echo ${DOCKER_CREDENTIALS_PSW} | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin"
+                sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                sh "docker push ${DOCKER_IMAGE_NAME}:latest"
+                
+                // Alternatif: Komentar baris di atas dan gunakan baris di bawah jika tidak ingin push ke Docker Hub
+                // echo "Skip pushing to Docker Hub for local development"
             }
         }
         
@@ -89,7 +79,9 @@ pipeline {
     post {
         always {
             // Bersihkan workspace
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
         success {
             echo 'Pipeline berhasil! API siap digunakan.'
