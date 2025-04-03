@@ -41,10 +41,12 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 // Login ke Docker Hub dan push image
-                sh "echo ${DOCKER_CREDENTIALS_PSW} | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin"
-                sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-                sh "docker push ${DOCKER_IMAGE_NAME}:latest"
-                sh "docker logout"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                    sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                    sh "docker push ${DOCKER_IMAGE_NAME}:latest"
+                    sh "docker logout"
+                }
             }
         }
         
@@ -66,17 +68,23 @@ pipeline {
     
     post {
         always {
-            node(null) {  // Ini memastikan kita memiliki konteks node untuk operasi file
-                cleanWs()  // Membersihkan workspace
+            node(null) {
+                // Bersihkan workspace
+                cleanWs()
+                
+                // PENTING: Tempatkan perintah shell di dalam blok node
+                sh "docker logout || true"
             }
-            // Pastikan untuk logout dari Docker Hub
-            sh "docker logout || true"
         }
         success {
-            echo 'Pipeline berhasil! API siap digunakan.'
+            node(null) {
+                echo 'Pipeline berhasil! API siap digunakan.'
+            }
         }
         failure {
-            echo 'Pipeline gagal. Periksa log untuk detail.'
+            node(null) {
+                echo 'Pipeline gagal. Periksa log untuk detail.'
+            }
         }
     }
 }
