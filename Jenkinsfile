@@ -1,14 +1,21 @@
 pipeline {
     agent any
     
+    // environment {
+    //     // Definisikan variabel lingkungan
+    //     APP_NAME = 'text-classification'
+    //     DOCKER_HUB_USERNAME = credentials('docker-hub-username')
+    //     DOCKER_IMAGE_NAME = "${DOCKER_HUB_USERNAME}/${APP_NAME}"
+    //     DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+    // }
+
     environment {
         // Definisikan variabel lingkungan
-        APP_NAME = 'text-classification-api'
-        DOCKER_HUB_USERNAME = credentials('docker-hub-username')
-        DOCKER_IMAGE_NAME = "${DOCKER_HUB_USERNAME}/${APP_NAME}"
-        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        APP_NAME = 'text-classification'
+        DOCKER_HUB_USERNAME = credentials('dockerhub-credentials').username
+        DOCKER_HUB_PASSWORD = credentials('dockerhub-credentials').password
     }
-    
+ 
     stages {
         stage('Checkout') {
             steps {
