@@ -5,7 +5,7 @@ pipeline {
         // Definisikan variabel lingkungan
         APP_NAME = 'text-classification'
         DOCKER_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKER_IMAGE_NAME = "${DOCKER_CREDENTIALS_USR}/${APP_NAME}"
+        DOCKER_IMAGE_NAME = "${env.DOCKER_CREDENTIALS_USR}/${APP_NAME}"
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
     
@@ -18,16 +18,10 @@ pipeline {
         }
         
         stage('Setup and Test') {
-            agent {
-                docker {
-                    image 'python:3.9'  // Gunakan image Docker Python
-                    reuseNode true
-                }
-            }
             steps {
-                // Setup environment Python dan jalankan test
+                // Setup environment Python dan jalankan test menggunakan node default
                 sh '''
-                python -m venv venv
+                python3 -m venv venv || python -m venv venv
                 . venv/bin/activate
                 pip install -r requirements.txt
                 pytest -xvs tests/test_app.py || echo "Tests failed but continuing"
@@ -50,9 +44,7 @@ pipeline {
                 sh "echo ${DOCKER_CREDENTIALS_PSW} | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin"
                 sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                 sh "docker push ${DOCKER_IMAGE_NAME}:latest"
-                
-                // Alternatif: Komentar baris di atas dan gunakan baris di bawah jika tidak ingin push ke Docker Hub
-                // echo "Skip pushing to Docker Hub for local development"
+                sh "docker logout"
             }
         }
         
@@ -74,8 +66,11 @@ pipeline {
     
     post {
         always {
-            // Bersihkan workspace
-            cleanWs()
+            node(null) {  // Ini memastikan kita memiliki konteks node untuk operasi file
+                cleanWs()  // Membersihkan workspace
+            }
+            // Pastikan untuk logout dari Docker Hub
+            sh "docker logout || true"
         }
         success {
             echo 'Pipeline berhasil! API siap digunakan.'
