@@ -174,23 +174,21 @@ pipeline {
     
     post {
         always {
-            node {
-                // Bersihkan workspace
-                cleanWs(cleanWhenNotBuilt: true,
-                        deleteDirs: true,
-                        disableDeferredWipeout: true,
-                        patterns: [[pattern: 'jenkins-artifacts', type: 'INCLUDE']])
-                
-                // Bersihkan Docker images jika ada
-                script {
-                    try {
-                        sh """
-                            docker rmi ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
-                            docker rmi ${DOCKER_IMAGE_NAME}:latest || true
-                        """
-                    } catch (Exception e) {
-                        echo "Tidak dapat membersihkan Docker images: ${e.message}"
-                    }
+            // Bersihkan workspace
+            cleanWs(cleanWhenNotBuilt: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    patterns: [[pattern: 'jenkins-artifacts', type: 'INCLUDE']])
+            
+            // Bersihkan Docker images jika ada
+            script {
+                try {
+                    sh """
+                        docker rmi ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
+                        docker rmi ${DOCKER_IMAGE_NAME}:latest || true
+                    """
+                } catch (Exception e) {
+                    echo "Tidak dapat membersihkan Docker images: ${e.message}"
                 }
             }
         }
