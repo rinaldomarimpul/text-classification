@@ -11,8 +11,14 @@ from app.main import app
 
 client = TestClient(app)
 
-
 print ("Testing FastAPI app...")
+print ("=========================")
+
+# Test cases for FastAPI app
+def test_root():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to the Text Classification API!"}
 
 def test_health_check():
     response = client.get("/health")
